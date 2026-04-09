@@ -1,30 +1,50 @@
 pipeline {
     agent any
+
+    tools {
+        maven 'Maven'   // Make sure Maven is configured in Jenkins
+        jdk 'JDK'       // Make sure JDK is configured
+    }
+
     stages {
-        stage('Build') {
+
+        stage('Checkout') {
             steps {
-                bat 'mvn -B -DskipTests clean package'
+                git 'https://github.com/Sujayv1/simple-java-maven-app.git'
             }
         }
+
+        stage('Build') {
+            steps {
+                bat 'mvn clean compile'
+            }
+        }
+
         stage('Test') {
             steps {
                 bat 'mvn test'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
+        }
+
+        stage('Package') {
+            steps {
+                bat 'mvn package'
             }
         }
-        stage('Deliver') {
+
+        stage('Archive') {
             steps {
-                bat './jenkins/scripts/deliver.sh'
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
         }
-        stage('Complete') {
-            steps {
-                echo 'Job Complete!'
-            }
+    }
+
+    post {
+        success {
+            echo 'Build SUCCESS ✅'
+        }
+        failure {
+            echo 'Build FAILED ❌'
         }
     }
 }
