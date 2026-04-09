@@ -1,44 +1,28 @@
 pipeline {
     agent any
+    options {
+        skipStagesAfterUnstable()
+    }
     stages {
-
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/Sujayv1/simple-java-maven-app.git'
-            }
-        }
-
         stage('Build') {
             steps {
-                bat 'mvn clean compile'
+                sh 'mvn -B -DskipTests clean package'
             }
         }
-
         stage('Test') {
             steps {
-                bat 'mvn test'
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
         }
-
-        stage('Package') {
+        stage('Deliver') { 
             steps {
-                bat 'mvn package'
+                sh './jenkins/scripts/deliver.sh' 
             }
-        }
-
-        stage('Archive') {
-            steps {
-                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build SUCCESS ✅'
-        }
-        failure {
-            echo 'Build FAILED ❌'
         }
     }
 }
